@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>CipherCorelink MVP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
+    input,button{padding:8px;margin:4px}
+    .card{border:1px solid #ddd;border-radius:12px;padding:16px;margin:12px 0}
+    pre{white-space:pre-wrap;background:#f7f7f7;padding:12px;border-radius:8px}
+  </style>
+</head>
+<body>
+<h1>🚀 CipherCorelink MVP</h1>
+<p>Login as <b>admin/admin</b>, <b>dev/dev</b>, or <b>user/user</b>.</p>
+
+<div class="card">
+  <h3>Login</h3>
+  <input id="handle" value="admin" placeholder="handle">
+  <input id="password" value="admin" placeholder="password">
+  <button onclick="login()">Login</button>
+  <div id="token"></div>
+</div>
+
+<div class="card">
+  <h3>Create Project (dev/admin)</h3>
+  <input id="pname" value="Premium Proxy" placeholder="project name">
+  <button onclick="createProject()">Create</button>
+  <pre id="created"></pre>
+</div>
+
+<div class="card">
+  <h3>Set Price (admin only)</h3>
+  <input id="pid" placeholder="project id (e.g., p-1)">
+  <input id="price" placeholder="price (e.g., 4.99)">
+  <button onclick="setPrice()">Set</button>
+  <pre id="priced"></pre>
+</div>
+
+<div class="card">
+  <h3>Marketplace</h3>
+  <button onclick="listProjects()">Refresh</button>
+  <pre id="market"></pre>
+</div>
+
+<div class="card">
+  <h3>Purchase (any logged-in role)</h3>
+  <input id="buyPid" placeholder="project id (e.g., p-1)">
+  <button onclick="buy()">Buy</button>
+  <pre id="buyres"></pre>
+</div>
+
+<div class="card">
+  <h3>Premium Test (needs purchase of p-1)</h3>
+  <button onclick="premium()">Get Premium Content</button>
+  <pre id="prem"></pre>
+</div>
+
+<script>
+let T = null;
+async function login(){
+  const r = await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({handle:document.getElementById('handle').value,password:document.getElementById('password').value})});
+  const j = await r.json(); T = j.token; document.getElementById('token').innerText = 'token: '+T;
+}
+async function createProject(){
+  const r = await fetch('/projects',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},
+    body: JSON.stringify({name:document.getElementById('pname').value})});
+  document.getElementById('created').innerText = JSON.stringify(await r.json(),null,2);
+}
+async function setPrice(){
+  const pid = document.getElementById('pid').value; const price = parseFloat(document.getElementById('price').value);
+  const r = await fetch('/admin/prices/'+pid,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},
+    body: JSON.stringify({price})});
+  document.getElementById('priced').innerText = JSON.stringify(await r.json(),null,2);
+}
+async function listProjects(){
+  const r = await fetch('/projects'); document.getElementById('market').innerText = JSON.stringify(await r.json(),null,2);
+}
+async function buy(){
+  const pid = document.getElementById('buyPid').value;
+  const r = await fetch('/purchase',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},
+    body: JSON.stringify({projectId:pid})});
+  document.getElementById('buyres').innerText = JSON.stringify(await r.json(),null,2);
+}
+async function premium(){
+  const r = await fetch('/sample/premium',{headers:{'Authorization':'Bearer '+T}});
+  document.getElementById('prem').innerText = JSON.stringify(await r.json(),null,2);
+}
+</script>
+</body>
+</html>
