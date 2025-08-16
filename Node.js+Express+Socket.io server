@@ -1,0 +1,66 @@
+// 2-code: Simple Chat Server with Registration
+// File: server.js
+
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const bodyParser = require("body-parser");
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// Foydalanuvchilarni vaqtincha xotirada saqlaymiz
+let users = {}; // { username: password }
+let onlineUsers = {}; // { socketId: username }
+
+app.use(bodyParser.json());
+
+// Ro‘yxatdan o‘tish (POST /register)
+app.post("/register", (req, res) => {
+  const { username, password } = req.body;
+
+  if (users[username]) {
+    return res.status(400).json({ message: "Bu login band!" });
+  }
+
+  users[username] = password;
+  return res.json({ message: "Ro‘yxatdan o‘tish muvaffaqiyatli!" });
+});
+
+// Login qilish (POST /login)
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (!users[username] || users[username] !== password) {
+    return res.status(401).json({ message: "Login yoki parol noto‘g‘ri!" });
+  }
+
+  return res.json({ message: "Login muvaffaqiyatli!", username });
+});
+
+// Socket.io chat
+io.on("connection", (socket) => {
+  console.log("Foydalanuvchi ulandi:", socket.id);
+
+  socket.on("join", (username) => {
+    onlineUsers[socket.id] = username;
+    io.emit("onlineUsers", Object.values(onlineUsers));
+  });
+
+  socket.on("chatMessage", (data) => {
+    io.emit("chatMessage", { user: onlineUsers[socket.id], text: data });
+  });
+
+  socket.on("disconnect", () => {
+    delete onlineUsers[socket.id];
+    io.emit("onlineUsers", Object.values(onlineUsers));
+    console.log("Foydalanuvchi chiqdi:", socket.id);
+  });
+});
+
+// Serverni ishga tushirish
+const PORT = 3000;
+server.listen(PORT, () => {
+  console.log(`Server http://localhost:${PORT} da ishlamoqda`);
+});
