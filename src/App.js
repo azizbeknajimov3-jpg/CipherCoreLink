@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Projects from "./pages/Projects";
 import Checkout from "./pages/Checkout";
 import Wallet from "./pages/Wallet";
+import Transactions from "./pages/Transactions"; // yangi qo‘shildi
 
 function App() {
   return (
@@ -11,11 +12,13 @@ function App() {
         <Link to="/">Loyihalar</Link>
         <Link to="/checkout">Checkout</Link>
         <Link to="/wallet">Wallet</Link>
+        <Link to="/transactions">Transactions</Link>
       </nav>
       <Routes>
         <Route path="/" element={<Projects />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/wallet" element={<Wallet />} />
+        <Route path="/transactions" element={<Transactions />} />
       </Routes>
     </BrowserRouter>
   );
