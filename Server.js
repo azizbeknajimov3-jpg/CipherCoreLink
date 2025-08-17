@@ -182,3 +182,7 @@ app.get('/sample/premium', authMiddleware, async (req, res) => {
 // server.js (tepasida authMiddleware va boshqa narsalar import qilingan faraz qilinadi)
 const adminAuditRoutes = require('./routes/adminAudit');
 app.use('/admin', adminAuditRoutes);
+// server.js (tegishli joyga)
+app.use('/auth', require('./routes/auth'));
+app.use('/ai', require('./routes/ai')); // AI command endpoint
+// eʼtibor: /ai route ichida auth middleware ishlaydi
