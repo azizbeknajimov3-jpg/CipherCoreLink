@@ -132,3 +132,50 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`CipherCorelink server running at http://localhost:${PORT}`);
 });
+
+// server.js ichida (tegishli joylarga qo‘shish)
+const audit = require('./utils/audit');
+
+// signup misoli
+app.post('/auth/signup', async (req, res) => {
+  try {
+    const { handle, password } = req.body;
+    const user = await User.create({ handle, password });
+    const token = jwt.sign({ id: user._id }, JWT_SECRET);
+    await audit(user, 'signup', { handle });
+    res.json({ token });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// login misoli
+app.post('/auth/login', async (req, res) => {
+  const { handle, password } = req.body;
+  const user = await User.findOne({ handle });
+  if (!user) return res.status(400).json({ error: 'Not found' });
+  if (!(await user.comparePassword(password))) return res.status(400).json({ error: 'Invalid password' });
+  const token = jwt.sign({ id: user._id }, JWT_SECRET);
+  await audit(user, 'login');
+  res.json({ token });
+});
+
+// project yaratish misoli
+app.post('/projects', authMiddleware, async (req, res) => {
+  const p = await Project.create({ owner: req.user.id, ...req.body });
+  await audit(req.user, 'create_project', { projectId: p._id });
+  res.json(p);
+});
+
+// purchase misoli
+app.post('/purchase', authMiddleware, async (req, res) => {
+  const { projectId } = req.body;
+  await audit(req.user, 'purchase', { projectId });
+  res.send("Purchased successfully!");
+});
+
+// premium misoli
+app.get('/sample/premium', authMiddleware, async (req, res) => {
+  await audit(req.user, 'access_premium');
+  res.json({ content: "Premium content!" });
+});
