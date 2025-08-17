@@ -186,3 +186,17 @@ app.use('/admin', adminAuditRoutes);
 app.use('/auth', require('./routes/auth'));
 app.use('/ai', require('./routes/ai')); // AI command endpoint
 // eʼtibor: /ai route ichida auth middleware ishlaydi
+// server.js (faqat kerakli qatorlar)
+const express = require("express");
+const app = express();
+
+// Webhooklar uchun Stripe talabiga ko'ra raw body:
+app.use("/webhooks/stripe", express.raw({ type: "application/json" }));
+app.use(express.json());
+
+// ... boshqa importlar
+app.use("/api/payments", require("./routes/payments"));
+app.use("/webhooks", require("./routes/webhooks"));
+app.use("/api/wallet", require("./routes/wallet"));
+
+// xatolarni ushlash va 404 lar...
