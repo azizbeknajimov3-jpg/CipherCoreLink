@@ -179,3 +179,6 @@ app.get('/sample/premium', authMiddleware, async (req, res) => {
   await audit(req.user, 'access_premium');
   res.json({ content: "Premium content!" });
 });
+// server.js (tepasida authMiddleware va boshqa narsalar import qilingan faraz qilinadi)
+const adminAuditRoutes = require('./routes/adminAudit');
+app.use('/admin', adminAuditRoutes);
