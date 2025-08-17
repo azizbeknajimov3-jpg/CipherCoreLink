@@ -91,3 +91,80 @@ async function premium(){
 </script>
 </body>
 </html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>CipherCorelink — Admin Audit</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body{font-family:system-ui,Arial;margin:20px;max-width:1100px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;border:1px solid #eee;text-align:left;font-size:13px}
+    th{background:#f3f4f6}
+    .controls{display:flex;gap:8px;align-items:center}
+    input,button,select{padding:8px;font-size:14px}
+    .small{font-size:12px;color:#666}
+  </style>
+</head>
+<body>
+  <h1>🔒 CipherCorelink — Admin Audit Logs</h1>
+
+  <div class="controls">
+    <label>Token: <input id="token" style="width:420px" placeholder="Paste admin token here"/></label>
+    <button onclick="loadAudit()">Load Logs</button>
+    <label class="small">Limit:
+      <select id="limit"><option>50</option><option selected>100</option><option>200</option></select>
+    </label>
+    <label class="small">Page: <input id="page" value="1" style="width:50px"/></label>
+  </div>
+
+  <div id="meta" class="small" style="margin-top:8px"></div>
+
+  <table id="auditTable">
+    <thead>
+      <tr><th>Time</th><th>User</th><th>Action</th><th>Meta</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const API_BASE = ''; // empty = same origin. If backend on different host, put full URL.
+
+    function fmtDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      return d.toLocaleString();
+    }
+
+    async function loadAudit() {
+      const token = document.getElementById('token').value.trim();
+      if (!token) { alert('Admin token required'); return; }
+      const limit = document.getElementById('limit').value;
+      const page = document.getElementById('page').value || '1';
+
+      const res = await fetch(`${API_BASE}/admin/audit?limit=${limit}&page=${page}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const j = await res.json();
+      if (!j.ok) {
+        alert('Error: ' + (j.error || JSON.stringify(j)));
+        return;
+      }
+      document.getElementById('meta').innerText = `Total: ${j.total} — page ${j.page} / limit ${j.limit}`;
+
+      const tbody = document.querySelector('#auditTable tbody');
+      tbody.innerHTML = '';
+      j.items.forEach(it => {
+        const tr = document.createElement('tr');
+        const metaStr = (typeof it.meta === 'object') ? JSON.stringify(it.meta) : String(it.meta || '');
+        tr.innerHTML = `<td>${fmtDate(it.createdAt)}</td>
+                        <td>${it.userHandle || it.userId || ''}</td>
+                        <td>${it.action}</td>
+                        <td><pre style="margin:0;font-size:12px">${metaStr}</pre></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
