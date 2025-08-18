@@ -1,0 +1,24 @@
+ai:
+  tick_seconds: 15
+
+tokens:
+  default:
+    mode: PEG_1_1_CCT
+    allow_ai_switch: true
+    min_days_locked: 7
+    fees:
+      trade_pct: 0.01
+      redeem_pct: 0.003
+    bands:
+      min_cct: 0.95
+      max_cct: 1.2
+    spread_pct: 0.02
+    float:
+      step_max_pct: 0.01
+      target_liquidity_cct: 5000
+
+treasury:
+  min_reserve_usd: 10000
+  payout_schedule: monthly
+  founder_share: 0.2
+  user_rewards_share: 0.1
