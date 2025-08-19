@@ -1,71 +1,52 @@
-// routes/auth.js
-// Signup / Login / Current user
-const express = require('express');
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../modelda/User");
+
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const audit = require('../utils/audit');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'devsecret';
-const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
-
-// Signup
-router.post('/signup', async (req, res) => {
+// ✅ Foydalanuvchi ro‘yxatdan o‘tish
+router.post("/register", async (req, res) => {
   try {
-    const { handle, password, role } = req.body || {};
-    if (!handle || !password) return res.status(400).json({ error: 'handle & password required' });
+    const { username, email, password } = req.body;
 
-    const exists = await User.findOne({ handle });
-    if (exists) return res.status(400).json({ error: 'handle already taken' });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ error: "Email already exists" });
 
-    const user = await User.createWithPassword(handle, password, role || 'user');
-    const token = jwt.sign({ id: user._id.toString(), handle: user.handle, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    await audit(user, 'signup', { handle });
-    res.json({ ok: true, token, user: { id: user._id, handle: user.handle, role: user.role } });
-  } catch (e) {
-    console.error('signup error', e);
-    res.status(500).json({ error: 'signup failed', details: e.message });
+    const user = new User({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.status(201).json({ token, user: { id: user._id, username: user.username, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Login
-router.post('/login', async (req, res) => {
+// ✅ Foydalanuvchi login
+router.post("/login", async (req, res) => {
   try {
-    const { handle, password } = req.body || {};
-    if (!handle || !password) return res.status(400).json({ error: 'handle & password required' });
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ handle });
-    if (!user) return res.status(401).json({ error: 'invalid credentials' });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "Invalid email or password" });
 
-    const ok = await user.comparePassword(password);
-    if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ error: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user._id.toString(), handle: user.handle, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-    await audit(user, 'login', {});
-    res.json({ ok: true, token, user: { id: user._id, handle: user.handle, role: user.role } });
-  } catch (e) {
-    console.error('login error', e);
-    res.status(500).json({ error: 'login failed', details: e.message });
-  }
-});
-
-// Whoami / current user (token required)
-router.get('/me', async (req, res) => {
-  try {
-    const auth = req.headers['authorization'];
-    if (!auth) return res.status(401).json({ error: 'no token' });
-    const parts = auth.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') return res.status(401).json({ error: 'malformed token' });
-
-    const payload = jwt.verify(parts[1], JWT_SECRET);
-    const user = await User.findById(payload.id).select('-passwordHash').lean();
-    if (!user) return res.status(401).json({ error: 'user not found' });
-
-    res.json({ ok: true, user });
-  } catch (e) {
-    return res.status(401).json({ error: 'invalid token', details: e.message });
+    res.json({ token, user: { id: user._id, username: user.username, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
