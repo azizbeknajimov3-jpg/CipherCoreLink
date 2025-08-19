@@ -31,3 +31,8 @@ const ProjectSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Project", ProjectSchema);
+monetizationMode: {
+  type: String,
+  enum: ["none", "direct", "aiManaged", "customRules"],
+  default: "direct",
+},
