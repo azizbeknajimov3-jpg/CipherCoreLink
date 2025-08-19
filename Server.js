@@ -210,3 +210,5 @@ const adminRevenue = require("./routes/adminRevenue");
 app.use("/api/adminRevenue", adminRevenue);
 const aiProject = require("./routes/aiProject");
 app.use("/api/aiProject", aiProject);
+const aiMonetize = require("./routes/aiMonetize");
+app.use("/api/aiMonetize", aiMonetize);
