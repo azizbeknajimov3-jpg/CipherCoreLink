@@ -99,4 +99,21 @@ router.get("/leaderboard", async (req, res) => {
 });
 
 module.exports = router;
+router.post("/:id/set-monetization", async (req, res) => {
+  try {
+    const { mode, customRules } = req.body;
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    if (!project.owner.equals(req.user._id))
+      return res.status(403).json({ error: "Forbidden" });
+
+    project.monetizationMode = mode;
+    project.customRules = mode === "customRules" ? customRules || [] : [];
+    await project.save();
+
+    res.json({ success: true, project });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
