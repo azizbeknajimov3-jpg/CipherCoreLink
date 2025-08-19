@@ -43,3 +43,38 @@ class AIProjectGenerator {
 }
 
 module.exports = AIProjectGenerator;
+const Project = require("../modelda/Project");
+
+class AIProjectGenerator {
+  static async createAutomaticProject({ ownerId, namePrefix, descriptionPrefix }) {
+    const name = `${namePrefix} #${Math.floor(Math.random() * 10000)}`;
+    const description = `${descriptionPrefix} created on ${new Date().toLocaleDateString()}`;
+    
+    const project = await Project.create({
+      owner: ownerId,
+      name,
+      description,
+      monetizationMode: "aiManaged",
+      audienceSize: 0,
+      totalRevenue: 0,
+      revenuePool: 0,
+    });
+
+    console.log(`Automatic project created: ${project.name}`);
+    return project;
+  }
+
+  static async updateMetrics(projectId, { audienceIncrease = 0, revenueIncrease = 0 }) {
+    const project = await Project.findById(projectId);
+    if (!project) throw new Error("Project not found");
+
+    project.audienceSize += audienceIncrease;
+    project.totalRevenue += revenueIncrease;
+    project.revenuePool += revenueIncrease;
+
+    await project.save();
+    console.log(`Metrics updated for project ${project.name}`);
+  }
+}
+
+module.exports = AIProjectGenerator;
