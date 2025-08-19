@@ -1,17 +1,19 @@
 const express = require("express");
 const Project = require("../modelda/Project");
-const User = require("../modelda/User");
 const RevenueEngine = require("../services/ai/RevenueEngine");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// ✅ Loyihani yaratish
+// Barcha route’larni auth bilan himoyalash
+router.use(authMiddleware);
+
 router.post("/create", async (req, res) => {
   try {
     const { name, description, monetizationMode, customRules } = req.body;
 
     const project = new Project({
-      owner: req.user._id, // foydalanuvchi token orqali aniqlanadi
+      owner: req.user._id,
       name,
       description,
       monetizationMode,
@@ -25,18 +27,20 @@ router.post("/create", async (req, res) => {
   }
 });
 
-// ✅ Auditoriya va daromadni yangilash
 router.post("/:id/update-metrics", async (req, res) => {
   try {
     const { audienceSize, revenue } = req.body;
-
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
 
-    if (audienceSize) project.audienceSize += audienceSize; 
+    // Faqat o‘zi yaratgan foydalanuvchi update qilishi mumkin
+    if (!project.owner.equals(req.user._id))
+      return res.status(403).json({ error: "Forbidden" });
+
+    if (audienceSize) project.audienceSize += audienceSize;
     if (revenue) {
-      project.totalRevenue += revenue; 
-      project.revenuePool += revenue; 
+      project.totalRevenue += revenue;
+      project.revenuePool += revenue;
     }
 
     await project.save();
@@ -46,11 +50,14 @@ router.post("/:id/update-metrics", async (req, res) => {
   }
 });
 
-// ✅ Revenue taqsimlash (AI yoki customRules bo‘yicha)
 router.post("/:id/distribute", async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
+
+    // Faqat o‘zi yaratgan foydalanuvchi taqsimlashi mumkin
+    if (!project.owner.equals(req.user._id))
+      return res.status(403).json({ error: "Forbidden" });
 
     const amount = project.revenuePool;
     if (amount <= 0) return res.status(400).json({ error: "No revenue to distribute" });
@@ -67,13 +74,12 @@ router.post("/:id/distribute", async (req, res) => {
   }
 });
 
-// ✅ Hamma loyihalarni daromad va auditoriya bo‘yicha tartiblab olish (leaderboard)
 router.get("/leaderboard", async (req, res) => {
   try {
     const projects = await Project.find()
-      .populate("owner", "username") // egasini ko‘rsatish
+      .populate("owner", "username")
       .sort({ totalRevenue: -1, audienceSize: -1 })
-      .limit(50); 
+      .limit(50);
 
     const rankedProjects = projects.map((proj, index) => ({
       rank: index + 1,
@@ -93,4 +99,4 @@ router.get("/leaderboard", async (req, res) => {
 });
 
 module.exports = router;
-  
+
