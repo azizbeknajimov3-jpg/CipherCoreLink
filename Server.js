@@ -204,3 +204,7 @@ app.use("/api/wallet", require("./routes/wallet"));
 app.use("/api/projects", require("./routes/projects"))
 const leaderboardRoutes = require("./routes/leaderboard");
 app.use("/leaderboard", leaderboardRoutes);
+const revenueEngine = require("./services/RevenueEngine");
+const adminRevenue = require("./routes/adminRevenue");
+
+app.use("/api/adminRevenue", adminRevenue);
