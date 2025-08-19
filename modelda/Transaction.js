@@ -1,23 +1,31 @@
-// models/Transaction.js
 const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema(
   {
     project: { type: mongoose.Schema.Types.ObjectId, ref: "Project", required: true },
+
+    // user yoki buyer – ikkalasini ham qo‘llash mumkin
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
     buyer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }, // guest ham bo‘lishi mumkin
-    amount: { type: Number, required: true }, // minor units: tiyin/cent
+
+    // transaction turi
+    type: { type: String, enum: ["deposit", "withdraw", "revenue", "payment"], required: true },
+
+    amount: { type: Number, required: true }, // minor units (tanga/tiyin)
     currency: { type: String, default: "USD" },
-    provider: { type: String, enum: ["internal", "stripe", "yookassa"], required: true },
-    providerPaymentId: { type: String }, // Stripe payment_intent id…
+
+    provider: { type: String, enum: ["internal", "stripe", "yookassa"], default: "internal" },
+    providerPaymentId: { type: String },
+
     status: { type: String, enum: ["pending", "succeeded", "failed", "refunded"], default: "pending" },
 
-    // nazorat: kim, qayerdan
-    buyerFingerprint: { type: String }, // device fingerprint (ixtiyoriy)
+    // nazorat ma’lumotlari
+    buyerFingerprint: { type: String },
     buyerIP: { type: String },
     buyerCountry: { type: String },
     userAgent: { type: String },
 
-    // agar real mahsulot bo‘lsa — yetkazib berish metama’lumotlari (logistika foydalanuvchida)
+    // agar real mahsulot bo‘lsa — delivery
     delivery: {
       type: new mongoose.Schema(
         {
