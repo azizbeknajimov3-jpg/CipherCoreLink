@@ -215,3 +215,5 @@ app.use("/api/aiMonetize", aiMonetize);
 require("./cronJobs/aiAutomationJob");
 const withdrawRoutes = require("./routes/withdraw");
 app.use("/withdraw", withdrawRoutes);
+const depositRoutes = require("./routes/deposit");
+app.use("/deposit", depositRoutes);
