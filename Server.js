@@ -200,3 +200,5 @@ app.use("/webhooks", require("./routes/webhooks"));
 app.use("/api/wallet", require("./routes/wallet"));
 
 // xatolarni ushlash va 404 lar...
+// server.js ichiga
+app.use("/api/projects", require("./routes/projects"))
