@@ -45,3 +45,31 @@ class AIMonetization {
 }
 
 module.exports = AIMonetization;
+const Project = require("../modelda/Project");
+const User = require("../modelda/User");
+const RevenueEngine = require("./RevenueEngine");
+
+class AIMonetization {
+  // AI tomonidan daromad taqsimlash
+  static async distributeRevenue(projectId) {
+    const project = await Project.findById(projectId);
+    if (!project || project.revenuePool <= 0) return;
+
+    if (project.monetizationMode === "none") {
+      return; // Daromad to‘planadi, lekin tarqatilmaydi
+    }
+
+    // Avval RevenueEngine ishlatib balanslarni yangilash
+    await RevenueEngine.distribute(projectId);
+
+    console.log(`Revenue distributed for project ${project.name}`);
+  }
+
+  // Foydalanuvchi pullik xizmatdan foyda oladi
+  static async userRevenue(userId, amount) {
+    await User.updateOne({ _id: userId }, { $inc: { balanceCct: amount } });
+    console.log(`User ${userId} received ${amount} CCT`);
+  }
+}
+
+module.exports = AIMonetization;
