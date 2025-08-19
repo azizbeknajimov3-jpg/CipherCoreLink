@@ -26,3 +26,7 @@ class RevenueEngine {
 }
 
 module.exports = RevenueEngine
+if (project.monetizationMode === "none") {
+  // Daromad to‘planadi, lekin hech kimga tarqatilmaydi
+  return;
+}
