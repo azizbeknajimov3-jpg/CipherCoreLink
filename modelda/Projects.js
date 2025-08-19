@@ -6,9 +6,10 @@ const ProjectSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: { type: String },
 
+    // Monetizatsiya usuli
     monetizationMode: {
       type: String,
-      enum: ["direct", "aiManaged", "customRules"],
+      enum: ["none", "direct", "aiManaged", "customRules"],
       default: "direct",
     },
 
@@ -31,8 +32,3 @@ const ProjectSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Project", ProjectSchema);
-monetizationMode: {
-  type: String,
-  enum: ["none", "direct", "aiManaged", "customRules"],
-  default: "direct",
-},
