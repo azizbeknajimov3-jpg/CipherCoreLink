@@ -212,3 +212,4 @@ const aiProject = require("./routes/aiProject");
 app.use("/api/aiProject", aiProject);
 const aiMonetize = require("./routes/aiMonetize");
 app.use("/api/aiMonetize", aiMonetize);
+require("./cronJobs/aiAutomationJob");
