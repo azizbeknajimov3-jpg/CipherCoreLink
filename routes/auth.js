@@ -1,50 +1,52 @@
+// routes/auth.js
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../modelda/User");
+const bcrypt = require("bcrypt");
+const User = require("../modelda/User"); // sizda model "modelda/User.js" da edi
 
 const router = express.Router();
 
-// ✅ Foydalanuvchi ro‘yxatdan o‘tish
+// Register qilish (test uchun)
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: "Email already exists" });
+    const existing = await User.findOne({ username });
+    if (existing) return res.status(400).json({ message: "User already exists" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, 10);
 
-    const user = new User({
+    const user = await User.create({
       username,
       email,
-      password: hashedPassword,
+      passwordHash: hash,
     });
 
-    await user.save();
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-    res.status(201).json({ token, user: { id: user._id, username: user.username, email: user.email } });
+    res.json({ message: "User registered", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ Foydalanuvchi login
+// Login qilish
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: "Invalid email or password" });
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: "Invalid email or password" });
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // JWT token yaratamiz
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "1d" }
+    );
 
-    res.json({ token, user: { id: user._id, username: user.username, email: user.email } });
+    res.json({ token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
